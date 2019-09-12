@@ -1,10 +1,17 @@
 import ConfigParser
 import os
+import warnings
+from collections import OrderedDict
 
 import cv2
-import numpy
-import skimage.feature as sk_feature
-import skimage.transform as sk_transform
+
+# To suppress DeprecationWarnings in the terminal
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    warnings.filterwarnings("ignore", category=UserWarning)
+    from sklearn.metrics.pairwise import cosine_similarity
+    import skimage.feature as sk_feature
+    import skimage.transform as sk_transform
 
 config_file = open('/media/adv/Shared/PROJECTS/CSE515_MWDB/Code/variables.cfg')
 config = ConfigParser.RawConfigParser(allow_no_value=True)
@@ -26,8 +33,8 @@ def hog_feature_extraction(image_file_name):
     # TODO:
     # Insert into DB
     
-    numpy.savetxt(OUTPUT_DIR + os.sep + 'hog_feature_descriptor_' + image_file_name + '.txt', hog_feature_vector,
-                  fmt='%f')
+    # numpy.savetxt(OUTPUT_DIR + os.sep + 'hog_feature_descriptor_' + image_file_name + '.txt', hog_feature_vector,
+    #               fmt='%f')
     return hog_feature_vector
 
 
@@ -41,12 +48,25 @@ def sift_feature_extraction(image_file_name):
     # TODO:
     # Insert into DB
     
-    numpy.savetxt(OUTPUT_DIR + os.sep + 'sift_feature_descriptor_' + image_file_name + '.txt', sift_feature_descriptor,
-                  fmt='%f')
+    # numpy.savetxt(OUTPUT_DIR + os.sep + 'sift_feature_descriptor_' + image_file_name + '.txt', sift_feature_descriptor,
+    #               fmt='%f')
     return sift_feature_descriptor
 
-def extract_hog_features_for_all_images():
-    pass
+
+def extract_hog_features_for_all_images(src_image_file_name):
+    similarity_scores = {}  # Store as Filename-Score pairs
+    src_feature_vector = hog_feature_extraction(src_image_file_name)
+    for image_file_name in os.listdir(HAND_IMAGE_DATASET_DIR):
+        if image_file_name != src_image_file_name:
+            print "Processing HOG for image ", image_file_name
+            target_feature_vector = hog_feature_extraction(image_file_name)
+            # Cosine similarity returns (1, 1) ndarray
+            similarity_scores[image_file_name] = cosine_similarity(src_feature_vector, target_feature_vector)[0, 0]
+    sorted_similarity_scores = OrderedDict(sorted(similarity_scores.items(), key=lambda x: x[1], reverse=True))
+    with open(OUTPUT_DIR + os.sep + 'hog_feature_similarity_' + src_image_file_name + '.txt', 'w+') as output_file:
+        output_file.write(str(sorted_similarity_scores))
+    return sorted_similarity_scores
+
 
 def extract_sift_features_for_all_images():
     pass

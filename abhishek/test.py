@@ -6,8 +6,6 @@ import skimage.feature as sk_feature
 import skimage.transform as sk_transform
 from sklearn.metrics.pairwise import cosine_similarity
 
-import abhishek
-
 config_file = open('/media/adv/Shared/PROJECTS/CSE515_MWDB/Code/variables.cfg')
 config = ConfigParser.RawConfigParser(allow_no_value=True)
 config.readfp(config_file)
