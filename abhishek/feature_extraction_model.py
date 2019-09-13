@@ -1,17 +1,12 @@
 import ConfigParser
 import os
-import warnings
 from collections import OrderedDict
 
 import cv2
+import skimage.feature as sk_feature
+import skimage.transform as sk_transform
 
-# To suppress DeprecationWarnings in the terminal
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
-    warnings.filterwarnings("ignore", category=UserWarning)
-    from sklearn.metrics.pairwise import cosine_similarity
-    import skimage.feature as sk_feature
-    import skimage.transform as sk_transform
+from functions import cosine_similarity
 
 config_file = open('/media/adv/Shared/PROJECTS/CSE515_MWDB/Code/variables.cfg')
 config = ConfigParser.RawConfigParser(allow_no_value=True)
@@ -61,7 +56,7 @@ def extract_hog_features_for_all_images(src_image_file_name):
             print "Processing HOG for image ", image_file_name
             target_feature_vector = hog_feature_extraction(image_file_name)
             # Cosine similarity returns (1, 1) ndarray
-            similarity_scores[image_file_name] = cosine_similarity(src_feature_vector, target_feature_vector)[0, 0]
+            similarity_scores[image_file_name] = cosine_similarity(src_feature_vector, target_feature_vector)
     sorted_similarity_scores = OrderedDict(sorted(similarity_scores.items(), key=lambda x: x[1], reverse=True))
     with open(OUTPUT_DIR + os.sep + 'hog_feature_similarity_' + src_image_file_name + '.txt', 'w+') as output_file:
         output_file.write(str(sorted_similarity_scores))
