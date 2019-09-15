@@ -1,4 +1,5 @@
 import math
+import sys
 
 from numpy import ndarray
 
@@ -16,6 +17,12 @@ def cosine_similarity(a, b):
 def euclidean_distance(a, b):
     __check_vectors(a, b)
     return math.sqrt(sum([math.pow(a[i] - b[i], 2) for i in range(len(a))]))
+
+
+def sift_similarity_function(matches):
+    if isinstance(matches, list) or isinstance(matches, tuple):
+        return 1.0 / sum(matches) if sum(matches) != 0 else sys.maxint
+    raise ValueError()
 
 
 def __check_vectors(a, b):
