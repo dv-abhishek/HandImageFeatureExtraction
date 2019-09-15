@@ -4,6 +4,15 @@ import sys
 from numpy import ndarray
 
 
+def __check_vectors(a, b):
+    if isinstance(a, ndarray) and len(a.shape) > 1:
+        a = a.flatten()
+    if isinstance(b, ndarray) and len(b.shape) > 1:
+        b = b.flatten()
+    if len(a) != len(b):
+        raise ValueError("The dimensions of the arguments mismatch")
+
+
 def cosine_similarity(a, b):
     __check_vectors(a, b)
     vector_dimension = len(a)
@@ -23,12 +32,3 @@ def sift_similarity_function(matches):
     if isinstance(matches, list) or isinstance(matches, tuple):
         return 1.0 / sum(matches) if sum(matches) != 0 else sys.maxint
     raise ValueError()
-
-
-def __check_vectors(a, b):
-    if isinstance(a, ndarray) and len(a.shape) > 1:
-        a = a.flatten()
-    if isinstance(b, ndarray) and len(b.shape) > 1:
-        b = b.flatten()
-    if len(a) != len(b):
-        raise ValueError("The dimensions of the arguments mismatch")
