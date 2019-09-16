@@ -26,14 +26,24 @@ db = db_client[HAND_IMAGE_DATASET_DIR.split('/', 5)[-1].replace('/', '#')]
 
 def hog_feature_extraction(image_file_name):
     image_file_path = HAND_IMAGE_DATASET_DIR + os.sep + image_file_name
-    src_image = misc.imread(image_file_path)
-    scaled_image = sk_transform.rescale(src_image, 0.1, anti_aliasing=True)  # Anti-aliasing applies gaussian filter
-    hog_feature_vector, hog_image = sk_feature.hog(scaled_image, orientations=9, pixels_per_cell=(8, 8),
-                                                   cells_per_block=(2, 2), block_norm='L2-Hys',
-                                                   visualize=True, feature_vector=True, multichannel=True)
+    hog_feature_vector = None
+    found_in_db = False
+    # If already present in the DB, then read and populate it
+    if config.get('config_key', 'read_from_db') == "True":
+        query_output = db.hog.find({"image": image_file_name.replace(".jpg", "")})
+        if query_output.count() > 0:
+            hog_feature_vector = numpy.asarray([row["vector"] for row in query_output])
+            found_in_db = True
+            print "Found HOG vector for image " + image_file_name
+    if not found_in_db:
+        src_image = misc.imread(image_file_path)
+        scaled_image = sk_transform.rescale(src_image, 0.1, anti_aliasing=True)  # Anti-aliasing applies gaussian filter
+        hog_feature_vector, hog_image = sk_feature.hog(scaled_image, orientations=9, pixels_per_cell=(8, 8),
+                                                       cells_per_block=(2, 2), block_norm='L2-Hys',
+                                                       visualize=True, feature_vector=True, multichannel=True)
     
     # Insert into DB
-    if config.get('config_key', 'write_to_db') == "True":
+    if config.get('config_key', 'write_to_db') == "True" and not found_in_db:
         output = db.hog.update_one(
             {"image": image_file_name.replace(".jpg", "")},
             {"$set": {"vector": hog_feature_vector.flatten().tolist()}},
@@ -54,16 +64,26 @@ def hog_feature_extraction(image_file_name):
 
 def sift_feature_extraction(image_file_name):
     image_file_path = HAND_IMAGE_DATASET_DIR + os.sep + image_file_name
-    src_image = misc.imread(image_file_path)
-    sift = cv2.xfeatures2d.SIFT_create()
-    image_grey = cv2.cvtColor(src_image, cv2.COLOR_BGR2GRAY)
-    key_points, sift_feature_descriptor = sift.detectAndCompute(image_grey, None)
+    sift_feature_descriptor = None
+    found_in_db = False
+    if config.get('config_key', 'read_from_db') == "True":
+        query_output = db.sift.find({"image": image_file_name.replace(".jpg", "")})
+        if query_output.count() > 0:
+            sift_feature_descriptor = numpy.asarray([row["vector"] for row in query_output])
+            found_in_db = True
+            print "Found HOG vector for image " + image_file_name
+
+    if not found_in_db:
+        src_image = misc.imread(image_file_path)
+        sift = cv2.xfeatures2d.SIFT_create()
+        image_grey = cv2.cvtColor(src_image, cv2.COLOR_BGR2GRAY)
+        key_points, sift_feature_descriptor = sift.detectAndCompute(image_grey, None)
     
     ''' Insert into DB
         Convert ndarray (n, 128) to list_of_list. Get back ndarray using
         numpy.asarray(list_of_list, dtype=numpy.float32)
     '''
-    if config.get('config_key', 'write_to_db') == "True":
+    if config.get('config_key', 'write_to_db') == "True" and not found_in_db:
         output = db.sift.update_one(
             {"image": image_file_name.replace(".jpg", "")},
             {"$set": {"vector": [list(x) for x in sift_feature_descriptor]}},

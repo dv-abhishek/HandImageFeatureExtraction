@@ -1,6 +1,6 @@
 import math
-import sys
 
+import statistics
 from numpy import ndarray
 
 
@@ -11,10 +11,11 @@ def __check_vectors(a, b):
         b = b.flatten()
     if len(a) != len(b):
         raise ValueError("The dimensions of the arguments mismatch")
+    return a, b
 
 
 def cosine_similarity(a, b):
-    __check_vectors(a, b)
+    a, b = __check_vectors(a, b)
     vector_dimension = len(a)
     
     length_a = math.sqrt(sum([math.pow(a[i], 2) for i in range(vector_dimension)]))
@@ -24,11 +25,12 @@ def cosine_similarity(a, b):
 
 
 def euclidean_distance(a, b):
-    __check_vectors(a, b)
+    a, b = __check_vectors(a, b)
     return math.sqrt(sum([math.pow(a[i] - b[i], 2) for i in range(len(a))]))
 
 
 def sift_similarity_function(matches):
     if isinstance(matches, list) or isinstance(matches, tuple):
-        return 1.0 / sum(matches) if sum(matches) != 0 else sys.maxint
+        # return 1.0 / sum(matches) if sum(matches) != 0 else sys.maxint
+        return statistics.mean(matches)
     raise ValueError()
